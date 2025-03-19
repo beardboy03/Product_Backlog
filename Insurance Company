@@ -1,0 +1,282 @@
+package scenario6;
+
+import java.util.*;
+
+class VehicleManagementSystem {
+    private static Scanner scanner = new Scanner(System.in);
+    private static Map<String, String> users = new HashMap<>(); // Stores username and password
+    private static Map<String, Underwriter> underwriters = new HashMap<>(); // Stores underwriters
+    private static Map<String, List<Insurance>> insurances = new HashMap<>(); // Stores insurances
+    private static int underwriterCount = 1; // Auto-increment for Underwriter ID
+    private static int insuranceCount = 1; // Auto-increment for Insurance Number
+    private static String loggedInUser = "";
+    private static String loggedInRole = "";
+    
+    public static void main(String[] args) {
+        initializeUsers(); // Initialize default users
+        login(); // Start login process
+    }
+    
+    private static void initializeUsers() {
+        users.put("admin", "Admin@123");
+        users.put("underwriter", "Employee@123");
+    }
+    
+    private static void login() {
+        System.out.println("Welcome to Vehicle Management Portal");
+        while (true) {
+            System.out.print("Enter Username: ");
+            String username = scanner.nextLine();
+            System.out.print("Enter Password: ");
+            String password = scanner.nextLine();
+            
+            if (users.containsKey(username) && users.get(username).equals(password)) {
+                loggedInUser = username;
+                loggedInRole = username.equals("admin") ? "Admin" : "Underwriter";
+                
+                if (password.equals("Employee@123")) {
+                    System.out.println("You must change your default password.");
+                    updatePassword();
+                } else {
+                    System.out.println("Login Successful! Welcome " + loggedInRole);
+                    mainMenu();
+                }
+                return;
+            } else {
+                System.out.println("Invalid Credentials. Please try again.");
+            }
+        }
+    }
+    
+    private static void mainMenu() {
+        while (true) {
+            System.out.println("\n--- Main Menu ---");
+            if (loggedInRole.equals("Admin")) {
+                System.out.println("1. Register Underwriter");
+                System.out.println("2. Delete Underwriter");
+            } else {
+                System.out.println("1. Add Insurance");
+                System.out.println("2. Search Insurance");
+                System.out.println("3. View Insurance History");
+                System.out.println("4. Update Password");
+            }
+            System.out.println("5. Logout");
+            
+            System.out.print("Enter your choice: ");
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
+            
+            switch (choice) {
+                case 1:
+                    if (loggedInRole.equals("Admin")) registerUnderwriter();
+                    else addInsurance();
+                    break;
+                case 2:
+                    if (loggedInRole.equals("Admin")) deleteUnderwriter();
+                    else searchInsurance();
+                    break;
+                case 3:
+                    if (loggedInRole.equals("Underwriter")) viewInsuranceHistory();
+                    else System.out.println("Invalid choice!");
+                    break;
+                case 4:
+                    if (loggedInRole.equals("Underwriter")) updatePassword();
+                    else System.out.println("Invalid choice!");
+                    break;
+                case 5:
+                    logout();
+                    return;
+                default:
+                    System.out.println("Invalid choice! Try again.");
+            }
+        }
+    }
+    private static void registerUnderwriter() {
+        System.out.println("\n--- Register Underwriter ---");
+        System.out.print("Enter Name (min 4 characters, no numbers): ");
+        String name = scanner.nextLine();
+        if (!name.matches("[a-zA-Z ]{4,}")) {
+            System.out.println("Invalid name format!");
+            return;
+        }
+        
+        System.out.print("Enter Date of Birth (YYYY-MM-DD): ");
+        String dob = scanner.nextLine();
+        System.out.print("Enter Gender (Male/Female): ");
+        String gender = scanner.nextLine();
+        System.out.print("Enter Address: ");
+        String address = scanner.nextLine();
+        
+        String underwriterId = "UW" + underwriterCount++;
+        String joiningDate = new Date().toString();
+        String defaultPassword = "Employee@123";
+        
+        Underwriter newUnderwriter = new Underwriter(name, dob, gender, address, underwriterId, joiningDate, defaultPassword);
+        underwriters.put(underwriterId, newUnderwriter);
+        users.put(underwriterId, defaultPassword);
+        
+        System.out.println("Underwriter Registered Successfully!");
+        System.out.println(newUnderwriter);
+    }
+    
+    private static void deleteUnderwriter() {
+        System.out.println("\n--- Delete Underwriter ---");
+        System.out.print("Enter Underwriter ID to delete: ");
+        String underwriterId = scanner.nextLine();
+        
+        if (underwriters.containsKey(underwriterId)) {
+            System.out.println("Underwriter Found: ");
+            System.out.println(underwriters.get(underwriterId));
+            
+            System.out.print("Are you sure you want to delete this underwriter? (yes/no): ");
+            String confirmation = scanner.nextLine();
+            
+            if (confirmation.equalsIgnoreCase("yes")) {
+                underwriters.remove(underwriterId);
+                users.remove(underwriterId);
+                System.out.println("Underwriter deleted successfully!");
+            } else {
+                System.out.println("Deletion canceled.");
+            }
+        } else {
+            System.out.println("Underwriter ID not found!");
+        }
+    }
+    
+    
+    static class Underwriter {
+        private String name;
+        private String dob;
+        private String gender;
+        private String address;
+        private String underwriterId;
+        private String joiningDate;
+        private String password;
+
+        public Underwriter(String name, String dob, String gender, String address, String underwriterId, String joiningDate, String password) {
+            this.name = name;
+            this.dob = dob;
+            this.gender = gender;
+            this.address = address;
+            this.underwriterId = underwriterId;
+            this.joiningDate = joiningDate;
+            this.password = password;
+        }
+
+        @Override
+        public String toString() {
+            return "Underwriter ID: " + underwriterId + "\nName: " + name + "\nDOB: " + dob +
+                   "\nGender: " + gender + "\nAddress: " + address + "\nJoining Date: " + joiningDate;
+        }
+    }
+
+    static class Insurance {
+        private String insuranceNumber;
+        private String vehicleNo;
+        private String make;
+        private String model;
+        private String startDate;
+        private String endDate;
+        private double premiumAmount;
+
+        public Insurance(String insuranceNumber, String vehicleNo, String make, String model, String startDate, String endDate, double premiumAmount) {
+            this.insuranceNumber = insuranceNumber;
+            this.vehicleNo = vehicleNo;
+            this.make = make;
+            this.model = model;
+            this.startDate = startDate;
+            this.endDate = endDate;
+            this.premiumAmount = premiumAmount;
+        }
+
+        @Override
+        public String toString() {
+            return "Insurance Number: " + insuranceNumber + "\nVehicle No: " + vehicleNo + 
+                   "\nMake: " + make + "\nModel: " + model + "\nStart Date: " + startDate + 
+                   "\nEnd Date: " + endDate + "\nPremium Amount: " + premiumAmount;
+        }
+    
+    public String getStartDate() {
+        return startDate;
+    }
+}
+
+    
+    private static void addInsurance() {
+        System.out.println("\n--- Add Insurance ---");
+        System.out.print("Enter Vehicle No: ");
+        String vehicleNo = scanner.nextLine();
+        System.out.print("Enter Make: ");
+        String make = scanner.nextLine();
+        System.out.print("Enter Model: ");
+        String model = scanner.nextLine();
+        System.out.print("Enter Start Date (YYYY-MM-DD): ");
+        String startDate = scanner.nextLine();
+        System.out.print("Enter End Date (YYYY-MM-DD): ");
+        String endDate = scanner.nextLine();
+        System.out.print("Enter Premium Amount: ");
+        double premiumAmount = scanner.nextDouble();
+        scanner.nextLine();
+        
+        String insuranceNumber = "INS" + insuranceCount++;
+        Insurance newInsurance = new Insurance(insuranceNumber, vehicleNo, make, model, startDate, endDate, premiumAmount);
+        
+        insurances.computeIfAbsent(vehicleNo, k -> new ArrayList<>()).add(newInsurance);
+        
+        System.out.println("Insurance added successfully!\n" + newInsurance);
+    }
+    
+    private static void searchInsurance() {
+        System.out.print("Enter Vehicle No to search: ");
+        String vehicleNo = scanner.nextLine();
+        
+        if (insurances.containsKey(vehicleNo)) {
+            List<Insurance> insuranceList = insurances.get(vehicleNo);
+            System.out.println("Active Insurance Details:");
+            for (Insurance ins : insuranceList) {
+                System.out.println(ins);
+            }
+        } else {
+            System.out.println("No insurance found for this vehicle.");
+        }
+    }
+    
+    private static void viewInsuranceHistory() {
+        System.out.print("Enter Vehicle No to view history: ");
+        String vehicleNo = scanner.nextLine();
+        
+        if (insurances.containsKey(vehicleNo)) {
+            List<Insurance> insuranceList = insurances.get(vehicleNo);
+            System.out.println("Insurance History (Latest First):");
+            insuranceList.stream()
+                .sorted((a, b) -> b.getStartDate().compareTo(a.getStartDate()))
+                .forEach(System.out::println);
+        } else {
+            System.out.println("No insurance history found for this vehicle.");
+        }
+    }
+    
+    private static void updatePassword() {
+        System.out.print("Enter new password: ");
+        String newPassword = scanner.nextLine();
+        System.out.print("Confirm new password: ");
+        String confirmPassword = scanner.nextLine();
+        
+        if (!newPassword.equals(confirmPassword) || !newPassword.matches(".*[0-9].*") || !newPassword.matches(".*[a-zA-Z].*")) {
+            System.out.println("Password must contain both letters and numbers and must match.");
+            return;
+        }
+        users.put(loggedInUser, newPassword);
+        System.out.println("Password updated successfully!");
+        
+        login();
+    }
+    
+    private static void logout() {
+        System.out.println("Logging out...");
+        loggedInUser = "";
+        loggedInRole = "";
+        login();
+    }
+}
+
